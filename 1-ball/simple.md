@@ -33,6 +33,8 @@ __BlankE.load()__
 ```
 Input.set("move_left", "left")
 Input.set("move_right", "right")
+Input.set("move_up","up")
+Input.set("move_down","down")
 
 BlankE.options.state = "PlayState"
 ```
@@ -44,6 +46,13 @@ BlankE.options.state = "PlayState"
 __init()__
 
 1. add the image of a ball `self.img_ball = Image("ball")`
+
+2. change the image offset to the center of the image
+
+```
+self.img_ball.xoffset = self.img_ball.width / 2
+self.img_ball.yoffset = self.img_ball.height / 2
+```
 
 __update(dt)__
 
@@ -63,7 +72,7 @@ __draw()__
 
 __init()__
 
-1. give Ball some gravity `self.gravity = 0.5`
+1. give Ball some gravity `self.gravity = 6`
 
 > ### __bounce on the player's paddle _(has a hitbox and collision event)___
 
@@ -80,8 +89,22 @@ __update(dt)__
 ```
 self.onCollision['main'] = function(other)
     if other.parent.classname == "Paddle" then
-        self:collisionBounce()
+        self:collisionBounce(1.01)
+        -- this will cause the ball to move slightly left or right depending on where it hits the paddle
+        self.hspeed = self.hspeed + (self.x - other.x)
     end
+end
+```
+
+> ### __bounce off the screen wall (keep the ball inside the screen)__
+
+__update(dt)__
+
+1. if the ball gets too close to the screen edges, flip its horizontal speed to have it go in the opposite direction
+
+```
+if self.x < 0 or self.x > game_width then
+    self.hspeed = -self.hspeed
 end
 ```
 
@@ -97,42 +120,202 @@ __init()__
 
 1. add the image of a paddle `self.img_paddle = Image("paddle")`
 
-__update(dt)__
-
-1. move the image
+2. change the image offset to the center of the image
 
 ```
-self.img_paddle.x = self.x - (self.img_paddle.width / 2)
-self.img_paddle.y = self.y - (self.img_paddle.height / 2)
+self.img_paddle.xoffset = self.img_paddle.width / 2
+self.img_paddle.yoffset = self.img_paddle.height / 2
 ```
 
-NOTE: subtracting half of the images height and width will make it so the image is in the center of it's actual position.
+3. give the Paddle friction so it won't move in one direction forever `self.friction = 0.4`
+
+4. add a hitbox `self:addShape("main","rectangle",{0,0,self.img_paddle.width self.img_paddle.height})`
+
+__draw()__
+
+1. Draw the paddle image `self.img_paddle:draw()`
 
 > ### Move left and right when the player presses those keys
 
 __update(dt)__
 
-1. watch for key presses
+1. determine how fast it will move `local move_spd = 800`
 
+2. watch for key presses and move the paddle in the direction the player presses
 
+```
+if Input("move_left").pressed then
+    self.hspeed =	-move_spd
+end
+if Input("move_right").pressed then 
+    self.hspeed =	move_spd 
+end 
+if Input("move_down").pressed then
+    self.vspeed =	move_spd 
+end
+if Input("move_up").pressed then
+    self.vspeed =	-move_spd
+end
+```
 
-* Wrap the paddle around the edges of the game
+NOTE: Creating the __move_spd__ variable is good practice instead of typing __800__ every time. If we test the game and realize the paddle moves too quickly, we can easily change the value of __move_spd__ instead of changing everywhere we typed __800__.
+
+3. move the paddle image
+
+```
+self.img_paddle.x = self.x 
+self.img_paddle.y = self.y
+```
+
+> ### Wrap the paddle around the edges of the game
+
+__update(dt)__
+
+1. check if it is out of bounds
+
+```
+if self.img_paddle.x > game_width then
+		
+end
+if self.img_paddle.y > game_height then
+    
+end
+if self.img_paddle.x < 0 then
+    
+end
+if self.img_paddle.y < 0 then
+    
+end
+```
+
+2. 'teleport' it to the other side of the screen, if it goes out of bounds
+
+```
+if self.x > game_width then
+    self.x = 0
+end
+if self.y > game_height then
+    self.y = 0
+end
+if self.x < 0 then
+    self.x = game_width
+end
+if self.y < 0 then
+    self.y = game_height
+end
+```
+
+## Entity -> Missile
+
+Missile behavior:
+
+> ### Draw a missile
+
+__init()__ 
+
+1. add missile image `self.img_missile = Image("missile")`
+
+2. center it
+
+```
+self.img_missile.xoffset = self.img_missile.width / 2
+self.img_missile.yoffset = self.img_missile.height / 2
+```
+
+__update(dt)__
+
+1. move it to the current position
+
+```
+self.img_missile.x = self.x
+self.img_missile.y = self.y
+```
+
+__draw()__
+
+1. draw it `self.img_missile:draw()`
+
+2. rotate the image to match the direction it's moving in `self.img_missile.angle = self.direction`
+
+> ### Make it a homing missile that follows the Paddle
+
+__update(dt)__
+
+1. if there is a paddle, move towards it
+
+```
+local paddle = Paddle.instances[1]
+if paddle and self.homing then
+    self:moveTowardsPoint(paddle.x, paddle.y, 400)
+end
+```
 
 __init()__
 
+1. after 10 seconds, stop homing in on the Paddle
 
-1. 
+```
+self.homing = true
+Timer.after(10, function()
+    self.homing = false
+end)
+```
+
+> ### Destroy the missile if it touches the Paddle or the screen edges
+
+__init()__
+
+1. give it a hitbox `self:addShape("main","rectangle",{0,0,self.img_missile.width,self.img_missile.height})`
+
+__update(dt)__
+
+2. call our custom explode() method during a collision
+
+```
+-- call our custom explode() method during a collision
+self.onCollision["main"] = function(other)
+    if other.parent.classname == "Paddle" then
+        self:explode()
+    end
+end	
+```
 
 ## State -> PlayState
 
 What will happen in this State?
 
-* The game will start with a Paddle.
+> ### Set up the game
 
-* A Ball will then drop from the top of the screen.
+__before enter()__
 
-* If the Ball falls off the screen, the game ends and the score is shown.
+1. Declare some local variables that will hold our paddle and ball `local ent_paddle, ent_ball`
 
 __enter()__
 
-1. 
+1. Spawn the Paddle `ent_paddle = Paddle()`
+
+2. Spawn a Ball `ent_ball = Ball()`
+
+3. Move the Ball to the top-middle of the screen
+
+```
+ent_ball.x = game_width / 2
+ent_ball.y = 0
+```
+
+4. Move the Paddle to the center of the screen
+
+```
+ent_paddle.x = game_width / 2
+ent_paddle.y = game_height / 2
+```
+
+__draw()__
+
+1. Draw the Paddle and Ball
+
+```
+
+```
+
+* If the Ball falls off the screen, the game ends and the score is shown.
