@@ -38,4 +38,12 @@ _update(dt)_ This will run every frame of the game. Imagine watching a movie fra
 
 _draw()_ This also runs every frame of the game. But try to use this function for just drawing stuff, which will be covered later.
 
- 4. 
+## [ 3 ] Add the ball
+
+So we're not adding anything to our state yet since we haven't made any objects yet. Let's fix that and make the bouncy ball.
+
+1. Search and select `Add an Entity`
+
+2. Name it `BouncyBall`. Again, this isn't mandatory and you can name it whatever you want.
+
+This new file contains our BouncyBall entity class. 
