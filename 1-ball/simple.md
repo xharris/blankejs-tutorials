@@ -31,10 +31,10 @@ Keep a bouncy ball bouncing in the air with your paddle. Don't let your paddle g
 __BlankE.load()__
 
 ```
-Input.set("move_left", "left")
-Input.set("move_right", "right")
-Input.set("move_up","up")
-Input.set("move_down","down")
+Input.set("move_left", "left", "a")
+Input.set("move_right", "right", "d")
+Input.set("move_up","up", "w")
+Input.set("move_down","down", "s")
 
 BlankE.options.state = "PlayState"
 ```
@@ -171,20 +171,14 @@ self.img_paddle.y = self.y
 
 __update(dt)__
 
-1. check if it is out of bounds
+1. check if it is out of bounds horizontally
 
 ```
-if self.img_paddle.x > game_width then
+if self.x > game_width then
 		
 end
-if self.img_paddle.y > game_height then
-    
-end
-if self.img_paddle.x < 0 then
-    
-end
-if self.img_paddle.y < 0 then
-    
+if self.x < 0 then
+
 end
 ```
 
@@ -194,14 +188,8 @@ end
 if self.x > game_width then
     self.x = 0
 end
-if self.y > game_height then
-    self.y = 0
-end
 if self.x < 0 then
     self.x = game_width
-end
-if self.y < 0 then
-    self.y = game_height
 end
 ```
 
@@ -231,11 +219,13 @@ self.img_missile.x = self.x
 self.img_missile.y = self.y
 ```
 
+2. rotate the image to match the direction it's moving in `self.img_missile.angle = self.direction`
+
+
 __draw()__
 
 1. draw it `self.img_missile:draw()`
 
-2. rotate the image to match the direction it's moving in `self.img_missile.angle = self.direction`
 
 > ### Make it a homing missile that follows the Paddle
 
@@ -261,6 +251,37 @@ Timer.after(10, function()
 end)
 ```
 
+> ### ...and wait 3 seconds before moving
+
+We want to give the player a chance to respond to these missiles before they become deadly (having a hitbox). This new code wil replace the __init()__ code from the previous step.
+
+__init()__
+
+1. make the missile non-homing when it spawns `self.homing = false`
+
+2. have the missile fade in while it's "charging up"
+
+```
+self.img_missile.alpha = 0
+Tween(self.img_missile, {alpha=1}, 3, "linear", function()
+
+end):play()
+```
+
+3. at the end of the tween, set the missile to homing
+
+```
+self.img_missile.alpha = 0
+Tween(self.img_missile, {alpha=1}, 3, "linear", function()
+    self.homing = true
+    Timer.after(10, function()
+        self.homing = false
+    end)
+end):play()
+```
+
+__init()__
+
 > ### Destroy the missile if it touches the Paddle or the screen edges
 
 __init()__
@@ -278,6 +299,41 @@ self.onCollision["main"] = function(other)
         self:explode()
     end
 end	
+```
+
+> ### Make the missile explosion look cool
+
+first, create the explosion method
+
+```
+function Missile:explosion()
+
+end
+```
+
+__explosion()__
+
+1. break the missile image into pieces `local img_missile_pcs = self.img_missile:chop(5,5)`
+
+2. throw them in the opposite direction 
+
+```
+local opp_direction = self.img_missile.angle + 180
+self.img_missile_pcs:forEach(function(piece)
+    local direction = randRange(opp_direction - 45, opp_direction + 45)
+    piece.hspeed = direction_x(direction, 20)
+    piece.vspeed = direction_y(direction, 20)
+end)
+```
+
+__draw()__
+
+1. draw the pieces
+
+```
+if self.img_missile_pcs then
+    self.img_missile_pcs:call('draw')
+end
 ```
 
 ## State -> PlayState
