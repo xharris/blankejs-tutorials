@@ -92,9 +92,13 @@ self.onCollision['main'] = function(other)
         self:collisionBounce(1.01)
         -- this will cause the ball to move slightly left or right depending on where it hits the paddle
         self.hspeed = self.hspeed + (self.x - other.x)
+
+        Signal.emit("ball_hit_paddle")
     end
 end
 ```
+
+NOTE: we'll use that Signal emission later for scoring
 
 > ### __bounce off the screen wall (keep the ball inside the screen)__
 
@@ -344,7 +348,7 @@ What will happen in this State?
 
 __before enter()__
 
-1. Declare some local variables that will hold our paddle and ball `local ent_paddle, ent_ball`
+1. Declare some local variables that will hold our paddle and ball`local ent_paddle, ent_ball`
 
 __enter()__
 
@@ -356,7 +360,7 @@ __enter()__
 
 ```
 ent_ball.x = game_width / 2
-ent_ball.y = 0
+ent_ball.y = 50
 ```
 
 4. Move the Paddle to the center of the screen
@@ -366,12 +370,45 @@ ent_paddle.x = game_width / 2
 ent_paddle.y = game_height / 2
 ```
 
+5. Spawn a missile every 5 seconds in a random spot
+
+```
+Timer.every(5, function()
+    local rand_missile = Missile()
+    rand_missile.x = randRange(50, game_width - 50)
+    rand_missile.y = randRange(50, game_height - 50)
+end)
+```
+
+6. Set the score to 0 `score = 0`
+
 __draw()__
 
 1. Draw the Paddle and Ball
 
 ```
-
+ent_paddle:draw()
+ent_ball:draw()
 ```
 
-* If the Ball falls off the screen, the game ends and the score is shown.
+2. Draw missiles `Missile.instances:call('draw')`
+
+> ### Handle the scoring
+
+__before enter()__
+
+1. Add a local variable `local ent_paddle, ent_ball, score`
+
+__enter()__
+
+1. Every time the ball hits the paddle, increment the score. This will use the Signal we emitted earlier
+
+```
+Signal.on("ball_hit_paddle",function()
+    score = score + 1
+end)
+```
+
+__draw()__
+
+1. Draw the score `Draw.text("SCORE: "..tostring(score), 20, 20)`
