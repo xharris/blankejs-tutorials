@@ -35,6 +35,7 @@ Input.set("move_left", "left", "a")
 Input.set("move_right", "right", "d")
 Input.set("move_up","up", "w")
 Input.set("move_down","down", "s")
+Input.set("restart","r")
 
 BlankE.options.state = "PlayState"
 ```
@@ -92,8 +93,6 @@ self.onCollision['main'] = function(other)
         self:collisionBounce(1.01)
         -- this will cause the ball to move slightly left or right depending on where it hits the paddle
         self.hspeed = self.hspeed + (self.x - other.x)
-
-        Signal.emit("ball_hit_paddle")
     end
 end
 ```
@@ -194,6 +193,52 @@ if self.x > game_width then
 end
 if self.x < 0 then
     self.x = game_width
+end
+```
+
+> ### Blow up the paddle when a Missile hits it
+
+__update(dt)__
+
+1. explode on contact with missile
+
+```
+self.onCollision["main"] = function(other)
+    if other.parent.classname == "Missile" then
+        self:explode()
+    end
+end
+```
+
+__explode()__
+
+```
+function Paddle:explode()
+
+end
+```
+
+1. break the paddle image into pieces `self.img_paddle_pcs = self.img_paddle:chop(5,5)`
+
+2. throw them in the opposite direction 
+
+```
+local opp_direction = self.img_missile.angle + 180
+self.img_paddle_pcs:forEach(function(piece)
+    local direction = randRange(opp_direction - 45, opp_direction + 45)
+    piece.hspeed = direction_x(direction, 20)
+    piece.vspeed = direction_y(direction, 20)
+end)
+Signal.emit("paddle_explode")
+```
+
+__draw()__
+
+1. draw the pieces
+
+```
+if self.img_missile_pcs then
+    self.img_missile_pcs:call('draw')
 end
 ```
 
@@ -307,15 +352,7 @@ end
 
 > ### Make the missile explosion look cool
 
-first, create the explosion method
-
-```
-function Missile:explosion()
-
-end
-```
-
-__explosion()__
+__explode()__ (create another explosion method)
 
 1. break the missile image into pieces `local img_missile_pcs = self.img_missile:chop(5,5)`
 
@@ -328,6 +365,7 @@ self.img_missile_pcs:forEach(function(piece)
     piece.hspeed = direction_x(direction, 20)
     piece.vspeed = direction_y(direction, 20)
 end)
+Signal.emit("paddle_explode")
 ```
 
 __draw()__
@@ -412,3 +450,23 @@ end)
 __draw()__
 
 1. Draw the score `Draw.text("SCORE: "..tostring(score), 20, 20)`
+
+> ### End the game when the paddle breaks or the ball drops
+
+__before enter()__
+
+1. Add local variable `local ent_paddle, ent_ball, score, game_over`
+
+__enter()__
+
+1. Set up game status variable `game_over = false`
+
+2. End game if paddle explodes 
+
+```
+Signal.on("paddle_explode",function()
+    game_over = true
+end)
+```
+
+__update(dt)__
