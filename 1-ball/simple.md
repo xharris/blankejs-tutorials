@@ -93,6 +93,8 @@ self.onCollision['main'] = function(other)
         self:collisionBounce(1.01)
         -- this will cause the ball to move slightly left or right depending on where it hits the paddle
         self.hspeed = self.hspeed + (self.x - other.x)
+        -- will be used later for keeping score
+        Signal.emit("ball_hit_paddle")
     end
 end
 ```
@@ -218,12 +220,19 @@ function Paddle:explode()
 end
 ```
 
-1. break the paddle image into pieces `self.img_paddle_pcs = self.img_paddle:chop(5,5)`
-
-2. throw them in the opposite direction 
+1. set a flag and check it so that the paddle can't explode again
 
 ```
-local opp_direction = self.img_missile.angle + 180
+if self.exploded then return end
+self.exploded = true
+```
+
+2. break the paddle image into pieces `self.img_paddle_pcs = self.img_paddle:chop(8,5)`
+
+3. throw them in random directions
+
+```
+local opp_direction = self.img_paddle.angle + 180
 self.img_paddle_pcs:forEach(function(piece)
     local direction = randRange(opp_direction - 45, opp_direction + 45)
     piece.hspeed = direction_x(direction, 20)
@@ -232,13 +241,37 @@ end)
 Signal.emit("paddle_explode")
 ```
 
+4. remove the hitbox so that it seems like it's actually exploded and gone
+
+`self:removeShape("main")`
+
+5. after some time, destroy the object
+
+```
+Timer.after(3, function()
+    self:destroy()
+end)
+```
+
 __draw()__
 
 1. draw the pieces
 
 ```
-if self.img_missile_pcs then
-    self.img_missile_pcs:call('draw')
+if self.img_paddle_pcs then
+    self.img_paddle_pcs:call('draw')
+end
+```
+
+2. hide the old image if it's exploded
+
+~~`self.img_paddle:draw()`~~
+
+```
+if self.img_paddle_pcs then
+    self.img_paddle_pcs:call('draw')
+else
+    self.img_paddle:draw()
 end
 ```
 
@@ -368,6 +401,18 @@ end)
 Signal.emit("paddle_explode")
 ```
 
+3. remove the hitbox so that it seems like it's actually exploded and gone
+
+`self:removeShape("main")`
+
+4. after some time, destroy the object
+
+```
+Timer.after(3, function()
+    self:destroy()
+end)
+```
+
 __draw()__
 
 1. draw the pieces
@@ -375,6 +420,18 @@ __draw()__
 ```
 if self.img_missile_pcs then
     self.img_missile_pcs:call('draw')
+end
+```
+
+2. hide the old image if it's exploded
+
+~~`self.img_missile:draw()`~~
+
+```
+if self.img_missile_pcs then
+    self.img_missile_pcs:call('draw')
+else
+    self.img_missile:draw()
 end
 ```
 
@@ -470,3 +527,34 @@ end)
 ```
 
 __update(dt)__
+
+1. End game if ball drops
+
+```
+if ent_ball.y > game_height then
+    ent_ball:destroy()
+    ent_paddle:explode()
+end
+```
+
+> ### Handle game over stuff
+
+__update(dt)__
+
+1. if the game is over, check if the player wants to restart
+
+```
+if game_over and Input("restart").released then
+    State.switch("PlayState")
+end
+```
+
+__draw()__
+
+2. draw game over text
+
+```
+if game_over then
+    Draw.text("GAME OVER", 0, game_height/2, {align="center"})
+end
+```
