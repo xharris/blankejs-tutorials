@@ -301,7 +301,7 @@ self.img_missile.x = self.x
 self.img_missile.y = self.y
 ```
 
-2. rotate the image to match the direction it's moving in `self.img_missile.angle = self.direction`
+2. rotate the image to match the direction it's moving in `self.img_missile.angle = self.direction + 90`
 
 
 __draw()__
@@ -318,7 +318,7 @@ __update(dt)__
 ```
 local paddle = Paddle.instances[1]
 if paddle and self.homing then
-    self:moveTowardsPoint(paddle.x, paddle.y, 400)
+    self:moveTowardsPoint(paddle.x, paddle.y, 100)
 end
 ```
 
@@ -377,7 +377,7 @@ __update(dt)__
 ```
 -- call our custom explode() method during a collision
 self.onCollision["main"] = function(other)
-    if other.parent.classname == "Paddle" then
+    if other.parent.classname == "Paddle" and self.homing then
         self:explode()
     end
 end	
