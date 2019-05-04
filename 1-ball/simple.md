@@ -46,28 +46,7 @@ BlankE.options.state = "PlayState"
 
 __init()__
 
-1. add the image of a ball `self.img_ball = Image("ball")`
-
-2. change the image offset to the center of the image
-
-```
-self.img_ball.xoffset = self.img_ball.width / 2
-self.img_ball.yoffset = self.img_ball.height / 2
-```
-
-__update(dt)__
-
-1. move the ball image to the Ball object's position
-
-```
-self.img_ball.x = self.x
-self.img_ball.y = self.y
-```
-
-__draw()__
-
-1. We can't forget to actually draw the ball image `self.img_ball:draw()`
-
+1. add the image of a ball and center it `self:addSprite{name="main",image="ball",align="center"}`
 
 > ### __fall towards the bottom of the screen _(affected by gravity)___
 
@@ -119,26 +98,15 @@ That should be everything we need for Ball!
 
 Paddle behavior:
 
-> ### Draw a paddle!
+> ### Draw a paddle and give it a hitbox!
 
 __init()__
 
-1. add the image of a paddle `self.img_paddle = Image("paddle")`
-
-2. change the image offset to the center of the image
-
-```
-self.img_paddle.xoffset = self.img_paddle.width / 2
-self.img_paddle.yoffset = self.img_paddle.height / 2
-```
+1. add the image of a paddle and center `self:addSprite{name="main",image="paddle",align="center"}`
 
 3. give the Paddle friction so it won't move in one direction forever `self.friction = 0.4`
 
 4. add a hitbox `self:addShape("main","rectangle",{0,0,self.img_paddle.width self.img_paddle.height})`
-
-__draw()__
-
-1. Draw the paddle image `self.img_paddle:draw()`
 
 > ### Move left and right when the player presses those keys
 
@@ -164,13 +132,6 @@ end
 ```
 
 NOTE: Creating the __move_spd__ variable is good practice instead of typing __800__ every time. If we test the game and realize the paddle moves too quickly, we can easily change the value of __move_spd__ instead of changing everywhere we typed __800__.
-
-3. move the paddle image
-
-```
-self.img_paddle.x = self.x 
-self.img_paddle.y = self.y
-```
 
 > ### Wrap the paddle around the edges of the game
 
@@ -227,14 +188,13 @@ if self.exploded then return end
 self.exploded = true
 ```
 
-2. break the paddle image into pieces `self.img_paddle_pcs = self.img_paddle:chop(8,5)`
+2. break the paddle image into pieces `self.img_paddle_pcs = self:getImage():chop(8,5)`
 
 3. throw them in random directions
 
 ```
-local opp_direction = self.img_paddle.angle + 180
 self.img_paddle_pcs:forEach(function(piece)
-    local direction = randRange(opp_direction - 45, opp_direction + 45)
+	local direction = randRange(0, 360)
     piece.hspeed = direction_x(direction, 20)
     piece.vspeed = direction_y(direction, 20)
 end)
@@ -265,13 +225,11 @@ end
 
 2. hide the old image if it's exploded
 
-~~`self.img_paddle:draw()`~~
-
 ```
 if self.img_paddle_pcs then
     self.img_paddle_pcs:call('draw')
 else
-    self.img_paddle:draw()
+    self:drawSprite()
 end
 ```
 
@@ -283,31 +241,11 @@ Missile behavior:
 
 __init()__ 
 
-1. add missile image `self.img_missile = Image("missile")`
-
-2. center it
-
-```
-self.img_missile.xoffset = self.img_missile.width / 2
-self.img_missile.yoffset = self.img_missile.height / 2
-```
+1. add missile image `self:addSprite{name="main",image="missile",align="center"}`
 
 __update(dt)__
 
-1. move it to the current position
-
-```
-self.img_missile.x = self.x
-self.img_missile.y = self.y
-```
-
-2. rotate the image to match the direction it's moving in `self.img_missile.angle = self.direction + 90`
-
-
-__draw()__
-
-1. draw it `self.img_missile:draw()`
-
+1. rotate the image to match the direction it's moving in `self.sprite_angle = self.direction + 90`
 
 > ### Make it a homing missile that follows the Paddle
 
@@ -344,7 +282,7 @@ __init()__
 2. have the missile fade in while it's "charging up"
 
 ```
-self.img_missile.alpha = 0
+self.sprite_alpha = 0
 Tween(self.img_missile, {alpha=1}, 3, "linear", function()
 
 end):play()
@@ -353,8 +291,8 @@ end):play()
 3. at the end of the tween, set the missile to homing
 
 ```
-self.img_missile.alpha = 0
-Tween(self.img_missile, {alpha=1}, 3, "linear", function()
+self.sprite_alpha = 0
+Tween(self, {sprite_alpha=1}, 3, "linear", function()
     self.homing = true
     Timer.after(10, function()
         self.homing = false
@@ -368,7 +306,7 @@ __init()__
 
 __init()__
 
-1. give it a hitbox `self:addShape("main","rectangle",{0,0,self.img_missile.width,self.img_missile.height})`
+1. give it a hitbox `self:addShape("main","rectangle",{0,0,self.sprite_width,self.sprite_height})`
 
 __update(dt)__
 
@@ -387,12 +325,12 @@ end
 
 __explode()__ (create another explosion method)
 
-1. break the missile image into pieces `local img_missile_pcs = self.img_missile:chop(5,5)`
+1. break the missile image into pieces `local img_missile_pcs = self:getImage():chop(5,5)`
 
 2. throw them in the opposite direction 
 
 ```
-local opp_direction = self.img_missile.angle + 180
+local opp_direction = self.sprite_angle + 180
 self.img_missile_pcs:forEach(function(piece)
     local direction = randRange(opp_direction - 45, opp_direction + 45)
     piece.hspeed = direction_x(direction, 20)
@@ -425,13 +363,11 @@ end
 
 2. hide the old image if it's exploded
 
-~~`self.img_missile:draw()`~~
-
 ```
 if self.img_missile_pcs then
     self.img_missile_pcs:call('draw')
 else
-    self.img_missile:draw()
+    self:drawSprite()
 end
 ```
 
