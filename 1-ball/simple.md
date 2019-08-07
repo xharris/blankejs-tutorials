@@ -24,9 +24,29 @@ Keep a bouncy ball bouncing in the air with your paddle. Don't let your paddle g
 
     ![paddle.png](paddle.png)
 
-## main.lua
+## Get Started
 
-> ### Setting the controls and the first state
+1. Click `New Project`
+
+2. Select the folder that will contain ALL of your BlankE projects.
+
+3. Rename it in the `new project name` dialog and press the checkmark.
+
+## Accessing the searchbar and creating files
+
+In the top left corner where it displays the project name, there is actually a hidden searchbar. :)
+
+* To create a regular file, search for `Add a script`
+
+* To create an Entity or Scene, search `Add an entity` or `Add a scene`
+
+Now we'll go through each script/entity/scene that we'll need for this game
+
+## main.js (Add a script)
+
+You can rename a script by clicking the 3-bar 'hamburger' menu in the top left
+
+> ### Setting the controls
 
 __BlankE.load()__
 
@@ -36,44 +56,25 @@ Input.set("move_right", "right", "d")
 Input.set("move_up","up", "w")
 Input.set("move_down","down", "s")
 Input.set("restart","r")
-
-BlankE.options.state = "PlayState"
 ```
 
-## Entity -> Ball
+## Entity -> Ball (Add an entity)
 
 > ### __look like a bouncy ball _(drawing the ball image)___
 
 __init()__
 
-1. add the image of a ball `self.img_ball = Image("ball")`
+1. add the image of a ball `this.addSprite("ball")`
 
-2. change the image offset to the center of the image
-
-```
-self.img_ball.xoffset = self.img_ball.width / 2
-self.img_ball.yoffset = self.img_ball.height / 2
-```
-
-__update(dt)__
-
-1. move the ball image to the Ball object's position
-
-```
-self.img_ball.x = self.x
-self.img_ball.y = self.y
-```
-
-__draw()__
-
-1. We can't forget to actually draw the ball image `self.img_ball:draw()`
-
+2. change the image offset to the center of the image `this.sprite_align = "center"`
 
 > ### __fall towards the bottom of the screen _(affected by gravity)___
 
 __init()__
 
 1. give Ball some gravity `self.gravity = 6`
+
+_(by default, `gravity_direction` is set to 90)_
 
 > ### __bounce on the player's paddle _(has a hitbox and collision event)___
 
