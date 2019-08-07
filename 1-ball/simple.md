@@ -80,7 +80,7 @@ _(by default, `gravity_direction` is set to 90)_
 
 __init()__
 
-1. add a hitbox `self:addShape('main','circle',{0,0,self.img_ball.width/2})`
+1. add a hitbox `self:addShape('circle')`
 
     NOTE: The _main_ hitbox is a circle with a radius equal to half the width of the ball image. It doesn't matter if you use the image's width or height here since the image's width and height are the same (32 x 32)
 
