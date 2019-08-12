@@ -209,30 +209,33 @@ explode () {
     this.exploded = true;
 ```
 
-2. break the paddle image into pieces `self.img_paddle_pcs = self.img_paddle:chop(8,5)`
+2. break the paddle image into pieces `let paddle_bits = this.sprites['paddle'].chop(5,8)`
 
 3. throw them in random directions
 
 ```
-local opp_direction = self.img_paddle.angle + 180
-self.img_paddle_pcs:forEach(function(piece)
-    local direction = randRange(opp_direction - 45, opp_direction + 45)
-    piece.hspeed = direction_x(direction, 20)
-    piece.vspeed = direction_y(direction, 20)
-end)
-Signal.emit("paddle_explode")
-```
-
-4. remove the hitbox so that it seems like it's actually exploded and gone
-
-`self:removeShape("main")`
-
-5. after some time, destroy the object
-
-```
-Timer.after(3, function(){
-    self:destroy()
+paddle_bits.forEach(b => {
+    let direction = Util.rand_range(45,135)
+    b.hspeed = Util.direction_x(direction, 10)
+    b.vspeed = Util.direction_y(direction, 10)
 })
+```
+
+4. destroy the original paddle `this.destroy()`
+
+Our final `explode()` code
+
+```
+if (this.exploded) return;
+this.exploded = true;
+		
+let paddle_bits = this.sprites['paddle'].chop(5,8)
+paddle_bits.forEach(b => {
+    let direction = Util.rand_range(45,135)
+    b.hspeed = Util.direction_x(direction, 10)
+    b.vspeed = Util.direction_y(direction, 10)
+})
+this.destroy();
 ```
 
 ## Entity -> Missile
@@ -243,31 +246,13 @@ Missile behavior:
 
 __init()__ 
 
-1. add missile image `self.img_missile = Image("missile")`
+1. add missile image `this.addSprite("missile")`
 
-2. center it
-
-```
-self.img_missile.xoffset = self.img_missile.width / 2
-self.img_missile.yoffset = self.img_missile.height / 2
-```
+2. center it `this.sprite_align = "center"`
 
 __update(dt)__
 
-1. move it to the current position
-
-```
-self.img_missile.x = self.x
-self.img_missile.y = self.y
-```
-
-2. rotate the image to match the direction it's moving in `self.img_missile.angle = self.direction`
-
-
-__draw()__
-
-1. draw it `self.img_missile:draw()`
-
+1. rotate the image to match the direction it's moving in `this.sprite_angle = this.direction`
 
 > ### Make it a homing missile that follows the Paddle
 
@@ -276,10 +261,10 @@ __update(dt)__
 1. if there is a paddle, move towards it
 
 ```
-local paddle = Paddle.instances[1]
-if paddle and self.homing then
-    self:moveTowardsPoint(paddle.x, paddle.y, 400)
-end
+let paddle = Paddle.instances[0];
+if (this.homing) {
+    this.moveTowards(paddle.x, paddle.y, 1)
+}
 ```
 
 __init()__
@@ -287,10 +272,10 @@ __init()__
 1. after 10 seconds, stop homing in on the Paddle
 
 ```
-self.homing = true
-Timer.after(10, function()
-    self.homing = false
-end)
+this.homing = true;
+Timer.after(10, ()=>{
+    this.homing = false;
+})
 ```
 
 > ### ...and wait 3 seconds before moving
