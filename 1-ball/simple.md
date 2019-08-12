@@ -72,7 +72,7 @@ __init()__
 
 __init()__
 
-1. give Ball some gravity `self.gravity = 6`
+1. give Ball some gravity `this.gravity = 6`
 
 _(by default, `gravity_direction` is set to 90)_
 
@@ -80,7 +80,7 @@ _(by default, `gravity_direction` is set to 90)_
 
 __init()__
 
-1. add a hitbox `self:addShape('circle')`
+1. add a hitbox `this.addShape('main','circle')`
 
     NOTE: The _main_ hitbox is a circle with a radius equal to half the width of the ball image. It doesn't matter if you use the image's width or height here since the image's width and height are the same (32 x 32)
 
@@ -89,16 +89,13 @@ __update(dt)__
 1. bounce when Ball hits a paddle
 
 ```
-self.onCollision['main'] = function(other)
-    if other.parent.classname == "Paddle" then
-        self:collisionBounce(1.01)
-        -- this will cause the ball to move slightly left or right depending on where it hits the paddle
-        self.hspeed = self.hspeed + (self.x - other.x)
-        -- will be used later for keeping score
-        Signal.emit("ball_hit_paddle")
-    end
-end
+this.onCollision['main'] = (other, res) => {
+    this.collisionBounce(Util.lerp(1,1.01,this.y/Game.height))
+    Event.emit("ball_bounce")
+}
 ```
+
+The `Util.lerp` part is some math that makes the ball bounce higher if the paddle is lower to the bottom of the screen.
 
 NOTE: we'll use that Signal emission later for scoring
 
@@ -109,9 +106,8 @@ __update(dt)__
 1. if the ball gets too close to the screen edges, flip its horizontal speed to have it go in the opposite direction
 
 ```
-if self.x < 0 or self.x > game_width then
-    self.hspeed = -self.hspeed
-end
+    if (this.x < 0 || this.x > Game.width)
+        this.hspeed = -this.hspeed;
 ```
 
 That should be everything we need for Ball!
@@ -124,54 +120,34 @@ Paddle behavior:
 
 __init()__
 
-1. add the image of a paddle `self.img_paddle = Image("paddle")`
+1. add the image of a paddle `this.addSprite("paddle")`
 
-2. change the image offset to the center of the image
+2. change the image offset to the center of the image `this.sprite_align = "center"`
 
-```
-self.img_paddle.xoffset = self.img_paddle.width / 2
-self.img_paddle.yoffset = self.img_paddle.height / 2
-```
+3. give the Paddle friction so it won't move in one direction forever `this.friction = 0.4`
 
-3. give the Paddle friction so it won't move in one direction forever `self.friction = 0.4`
-
-4. add a hitbox `self:addShape("main","rectangle",{0,0,self.img_paddle.width self.img_paddle.height})`
-
-__draw()__
-
-1. Draw the paddle image `self.img_paddle:draw()`
+4. add a hitbox `self:addShape("main","rect")`
 
 > ### Move left and right when the player presses those keys
 
 __update(dt)__
 
-1. determine how fast it will move `local move_spd = 800`
+1. determine how fast it will move `let move_spd = 5`
 
 2. watch for key presses and move the paddle in the direction the player presses
 
 ```
-if Input("move_left").pressed then
-    self.hspeed =	-move_spd
-end
-if Input("move_right").pressed then 
-    self.hspeed =	move_spd 
-end 
-if Input("move_down").pressed then
-    self.vspeed =	move_spd 
-end
-if Input("move_up").pressed then
-    self.vspeed =	-move_spd
-end
+if (Input("move_left").pressed)
+    this.hspeed = -move_spd;
+if (Input("move_right").pressed)
+    this.hspeed = move_spd;
+if (Input("move_up").pressed)
+    this.vspeed = -move_spd;
+if (Input("move_down").pressed)
+    this.vspeed = move_spd;
 ```
 
-NOTE: Creating the __move_spd__ variable is good practice instead of typing __800__ every time. If we test the game and realize the paddle moves too quickly, we can easily change the value of __move_spd__ instead of changing everywhere we typed __800__.
-
-3. move the paddle image
-
-```
-self.img_paddle.x = self.x 
-self.img_paddle.y = self.y
-```
+NOTE: Creating the __move_spd__ variable is good practice instead of typing __5__ every time. If we test the game and realize the paddle moves too quickly, we can easily change the value of __move_spd__ instead of changing everywhere we typed __5__.
 
 > ### Wrap the paddle around the edges of the game
 
@@ -180,52 +156,57 @@ __update(dt)__
 1. check if it is out of bounds horizontally
 
 ```
-if self.x > game_width then
-		
-end
-if self.x < 0 then
+if (this.x > Game.width)
+	;
+    
+if (this.x < 0)
+    ;
 
-end
 ```
 
 2. 'teleport' it to the other side of the screen, if it goes out of bounds
 
 ```
-if self.x > game_width then
-    self.x = 0
-end
-if self.x < 0 then
-    self.x = game_width
-end
+if (this.x > Game.width)
+    this.x = 0;
+if (this.x < 0)
+    this.x = Game.width;
 ```
 
-> ### Blow up the paddle when a Missile hits it
+> ### Blow up the paddle when a Missile hits it (we'll add missiles later)
 
 __update(dt)__
 
 1. explode on contact with missile
 
 ```
-self.onCollision["main"] = function(other)
-    if other.parent.classname == "Missile" then
-        self:explode()
-    end
-end
+this.onCollision['main'] = (other) => {
+    if (other.tag == "Missile")
+        this.explode()
+}
 ```
 
 __explode()__
 
-```
-function Paddle:explode()
+_We're going to add a new method to our Paddle class named `explode`_
 
-end
 ```
+update (dt) {
+    ...stuff in update function
+}
+explode () {
+    ...our Paddle's new explode function!
+}
+```
+
+_The stuff below will go inside `explode()`_
 
 1. set a flag and check it so that the paddle can't explode again
 
 ```
-if self.exploded then return end
-self.exploded = true
+explode () {
+    if (this.exploded) return;
+    this.exploded = true;
 ```
 
 2. break the paddle image into pieces `self.img_paddle_pcs = self.img_paddle:chop(8,5)`
@@ -249,31 +230,9 @@ Signal.emit("paddle_explode")
 5. after some time, destroy the object
 
 ```
-Timer.after(3, function()
+Timer.after(3, function(){
     self:destroy()
-end)
-```
-
-__draw()__
-
-1. draw the pieces
-
-```
-if self.img_paddle_pcs then
-    self.img_paddle_pcs:call('draw')
-end
-```
-
-2. hide the old image if it's exploded
-
-~~`self.img_paddle:draw()`~~
-
-```
-if self.img_paddle_pcs then
-    self.img_paddle_pcs:call('draw')
-else
-    self.img_paddle:draw()
-end
+})
 ```
 
 ## Entity -> Missile
