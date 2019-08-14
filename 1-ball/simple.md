@@ -90,8 +90,10 @@ __update(dt)__
 
 ```
 this.onCollision['main'] = (other, res) => {
-    this.collisionBounce(Util.lerp(1,1.01,this.y/Game.height))
-    Event.emit("ball_bounce")
+    if (other.tag == "Paddle") {
+        this.collisionBounce(Util.lerp(1,1.01,this.y/Game.height))
+        Event.emit("ball_bounce")
+    }
 }
 ```
 
@@ -153,7 +155,7 @@ NOTE: Creating the __move_spd__ variable is good practice instead of typing __5_
 
 __update(dt)__
 
-1. check if it is out of bounds horizontally
+1. check if it is out of bounds
 
 ```
 if (this.x > Game.width)
@@ -162,6 +164,11 @@ if (this.x > Game.width)
 if (this.x < 0)
     ;
 
+if (this.y < 0)
+    ;
+
+if (this.y > Game.height)
+    ;
 ```
 
 2. 'teleport' it to the other side of the screen, if it goes out of bounds
@@ -171,18 +178,24 @@ if (this.x > Game.width)
     this.x = 0;
 if (this.x < 0)
     this.x = Game.width;
+if (this.y < 0)
+    this.y = Game.height;
+if (this.y > Game.height)
+    this.y = 0;
 ```
 
 > ### Blow up the paddle when a Missile hits it (we'll add missiles later)
 
 __update(dt)__
 
-1. explode on contact with missile
+1. explode on contact with missile (destroy the missile too)
 
 ```
 this.onCollision['main'] = (other) => {
-    if (other.tag == "Missile")
-        this.explode()
+    if (other.tag == "Missile") {
+        other.parent.destroy();
+        this.explode();
+    }
 }
 ```
 
@@ -280,226 +293,140 @@ Timer.after(10, ()=>{
 
 > ### ...and wait 3 seconds before moving
 
-We want to give the player a chance to respond to these missiles before they become deadly (having a hitbox). This new code wil replace the __init()__ code from the previous step.
+We want to give the player a chance to respond to these missiles before they become deadly (having a hitbox). 
+
+For this we'll add a 'tween' to make the missile gradually appear. At the end of the tween, the missile will start moving.
+
+To enable the Tween plugin, click the puzzle piece icon ('view plugins') and check Tween.js
 
 __init()__
 
-1. make the missile non-homing when it spawns `self.homing = false`
+1. make the missile non-homing when it spawns `this.homing = false` (change the line where we put `this.homing = true`)
 
 2. have the missile fade in while it's "charging up"
 
 ```
-self.img_missile.alpha = 0
-Tween(self.img_missile, {alpha=1}, 3, "linear", function()
-
-end):play()
+this.sprite_alpha = 0
+let twn = new TWEEN.Tween(this)
+    .to({ sprite_alpha:1 },3000)
+    .easing(TWEEN.Easing.Quadratic.Out)
+    .onComplete(()=>{
+        this.homing = true;
+		this.addShape('main','circle')
+    })
+    .start()
 ```
 
-3. at the end of the tween, set the missile to homing
+NOTE: We're putting `this.addShape` in the onComplete part of the tween. That means we need to remove the line we previously added (`this.addShape('main','circle')`). The reason for this is because we don't want the paddle to be able to hit the missile while it's fading in, but rather when the missile is completely visible and moving towards the paddle.
 
-```
-self.img_missile.alpha = 0
-Tween(self.img_missile, {alpha=1}, 3, "linear", function()
-    self.homing = true
-    Timer.after(10, function()
-        self.homing = false
-    end)
-end):play()
-```
+## Scene -> ScenePlay
 
-__init()__
-
-> ### Destroy the missile if it touches the Paddle or the screen edges
-
-__init()__
-
-1. give it a hitbox `self:addShape("main","rectangle",{0,0,self.img_missile.width,self.img_missile.height})`
-
-__update(dt)__
-
-2. call our custom explode() method during a collision
-
-```
--- call our custom explode() method during a collision
-self.onCollision["main"] = function(other)
-    if other.parent.classname == "Paddle" then
-        self:explode()
-    end
-end	
-```
-
-> ### Make the missile explosion look cool
-
-__explode()__ (create another explosion method)
-
-1. break the missile image into pieces `local img_missile_pcs = self.img_missile:chop(5,5)`
-
-2. throw them in the opposite direction 
-
-```
-local opp_direction = self.img_missile.angle + 180
-self.img_missile_pcs:forEach(function(piece)
-    local direction = randRange(opp_direction - 45, opp_direction + 45)
-    piece.hspeed = direction_x(direction, 20)
-    piece.vspeed = direction_y(direction, 20)
-end)
-Signal.emit("paddle_explode")
-```
-
-3. remove the hitbox so that it seems like it's actually exploded and gone
-
-`self:removeShape("main")`
-
-4. after some time, destroy the object
-
-```
-Timer.after(3, function()
-    self:destroy()
-end)
-```
-
-__draw()__
-
-1. draw the pieces
-
-```
-if self.img_missile_pcs then
-    self.img_missile_pcs:call('draw')
-end
-```
-
-2. hide the old image if it's exploded
-
-~~`self.img_missile:draw()`~~
-
-```
-if self.img_missile_pcs then
-    self.img_missile_pcs:call('draw')
-else
-    self.img_missile:draw()
-end
-```
-
-## State -> PlayState
-
-What will happen in this State?
+What will happen in this Scene? This is where the game will be played. We'll spawn a paddle and a ball above it. Every few seconds we'll spawn a missile. Every time the ball hits the paddle, the player gains a point. If the ball falls off the bottom of the screen, the player loses.
 
 > ### Set up the game
 
-__before enter()__
+__onStart()__
 
-1. Declare some local variables that will hold our paddle and ball`local ent_paddle, ent_ball`
+1. Spawn a Paddle `scene.paddle = new Paddle()`
 
-__enter()__
-
-1. Spawn the Paddle `ent_paddle = Paddle()`
-
-2. Spawn a Ball `ent_ball = Ball()`
+2. Spawn a Ball `scene.ball = new Ball()`
 
 3. Move the Ball to the top-middle of the screen
 
 ```
-ent_ball.x = game_width / 2
-ent_ball.y = 50
+scene.ball.x = Game.width / 2
+scene.ball.y = 50
 ```
 
 4. Move the Paddle to the center of the screen
 
 ```
-ent_paddle.x = game_width / 2
-ent_paddle.y = game_height / 2
+scene.paddle.x = Game.width / 2
+scene.paddle.y = Game.height / 2
 ```
 
-5. Spawn a missile every 5 seconds in a random spot
+5. Set some variables to track how the player is doing
 
 ```
-Timer.every(5, function()
-    local rand_missile = Missile()
-    rand_missile.x = randRange(50, game_width - 50)
-    rand_missile.y = randRange(50, game_height - 50)
-end)
+scene.player_alive = true
+scene.score = 0;
 ```
 
-6. Set the score to 0 `score = 0`
-
-__draw()__
-
-1. Draw the Paddle and Ball
+6. Spawn a missile every 5 seconds in a random spot
 
 ```
-ent_paddle:draw()
-ent_ball:draw()
+Timer.every(5000, ()=>{
+    if (scene.player_alive) {
+        let rand_missile = new Missile()
+        rand_missile.x = Util.rand_range(50, Game.width-50)
+        rand_missile.y = Util.rand_range(50, Game.height-50)
+    }
+});
 ```
-
-2. Draw missiles `Missile.instances:call('draw')`
 
 > ### Handle the scoring
 
-__before enter()__
+__onStart()__
 
-1. Add a local variable `local ent_paddle, ent_ball, score`
+1. Make a Text object
 
-__enter()__
+```
+scene.txt_score = new Text({
+        fontSize:16,
+        align:"center",
+        x: 30,
+        y: 30,
+        text:"SCORE: 0"
+    });
+```
+
+__onUpdate()__
 
 1. Every time the ball hits the paddle, increment the score. This will use the Signal we emitted earlier
 
 ```
-Signal.on("ball_hit_paddle",function()
-    score = score + 1
-end)
+Event.on('ball_bounce',()=>{
+    scene.score += 1
+    scene.txt_score.text = "SCORE: "+scene.score;
+});
 ```
-
-__draw()__
-
-1. Draw the score `Draw.text("SCORE: "..tostring(score), 20, 20)`
 
 > ### End the game when the paddle breaks or the ball drops
 
-__before enter()__
+__onStart()__
 
-1. Add local variable `local ent_paddle, ent_ball, score, game_over`
-
-__enter()__
-
-1. Set up game status variable `game_over = false`
-
-2. End game if paddle explodes 
+1. end game if paddle explodes 
 
 ```
-Signal.on("paddle_explode",function()
-    game_over = true
-end)
+Event.on('paddle_explode',()=>{
+    scene.player_alive = false;
+});
+```
+
+2. draw some game over text
+
+```
+
 ```
 
 __update(dt)__
 
-1. End game if ball drops
+1. end game if ball drops off screen
 
 ```
-if ent_ball.y > game_height then
-    ent_ball:destroy()
-    ent_paddle:explode()
-end
+if (scene.ball.y > Game.height) {
+    scene.paddle.explode();	
+}
 ```
-
-> ### Handle game over stuff
 
 __update(dt)__
 
-1. if the game is over, check if the player wants to restart
+2. check if the player wants to restart
 
 ```
-if game_over and Input("restart").released then
-    State.switch("PlayState")
-end
+if (!scene.player_alive && Input("restart").released) {
+    Scene.switch('ScenePlay')	
+}
 ```
 
-__draw()__
-
-2. draw game over text
-
-```
-if game_over then
-    Draw.text("GAME OVER", 0, game_height/2, {align="center"})
-end
-```
+__There are plenty of other small touch-ups we could problably add to this, but at least we have a somewhat complete game!__
