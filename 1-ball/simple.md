@@ -2,27 +2,13 @@
 
 Keep a bouncy ball bouncing in the air with your paddle. Don't let your paddle get destroyed!
 
-## Ingredients
+## Elements
 
-* Entities
+* Entities: Ball, Missile, Paddle
 
-    * Ball
+* States: PlayState
 
-    * Missile
-
-    * Paddle
-
-* States
-
-    * PlayState
-
-* Images
-
-    ![ball.png](ball.png)
-
-    ![missile.png](missile.png)
-
-    ![paddle.png](paddle.png)
+* Images: ![ball.png](ball.png) ![missile.png](missile.png) ![paddle.png](paddle.png)
 
 ## Get Started
 
