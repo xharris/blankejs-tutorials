@@ -1,4 +1,4 @@
-# Bouncy Ball Survival
+# Bouncy Ball Survival Game
 
 Keep a bouncy ball bouncing in the air with your paddle. Don't let your paddle get destroyed!
 
