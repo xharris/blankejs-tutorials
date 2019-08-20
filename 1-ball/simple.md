@@ -36,8 +36,6 @@ Note: You can rename a script by clicking the 3-bar 'hamburger' menu in the top 
 
 > ### Setting the controls
 
-__BlankE.load()__
-
 ```
 Input.set("move_left", "left", "a")
 Input.set("move_right", "right", "d")
@@ -50,7 +48,7 @@ Input.set("restart","r")
 
 > ### __look like a bouncy ball _(drawing the ball image)___
 
-__init()__
+__init()__ (this code will go inside the init() function)
 
 1. add the image of a ball `this.addSprite("ball")`
 
@@ -58,7 +56,7 @@ __init()__
 
 > ### __fall towards the bottom of the screen _(affected by gravity)___
 
-__init()__
+__init()__ (this code will also go inside the init() function)
 
 1. give Ball some gravity `this.gravity = 6`
 
