@@ -32,7 +32,7 @@ Now we'll go through each script/entity/scene that we'll need for this game
 
 ## main.js (Add a script)
 
-You can rename a script by clicking the 3-bar 'hamburger' menu in the top left
+Note: You can rename a script by clicking the 3-bar 'hamburger' menu in the top left of the code window (next to the script name)
 
 > ### Setting the controls
 
