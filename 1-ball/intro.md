@@ -1,4 +1,4 @@
-# Bouncy Ball
+# Quick intro to developing with BlankE
 
 ## [ 1 ] Create a new project
 
