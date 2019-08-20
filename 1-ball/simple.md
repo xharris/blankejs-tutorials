@@ -2,7 +2,7 @@
 
 Keep a bouncy ball bouncing in the air with your paddle. Don't let your paddle get destroyed!
 
-The full finished tutorial project can be downloaded [here](https://github.com/xharris/blankejs-tutorials/raw/master/1-ball/tutorial1game.zip)
+The full finished tutorial project can be downloaded [here](https://github.com/xharris/blankejs-tutorials/raw/master/1-ball/tutorial1game.zip). Be sure to unzip it first!
 
 ## Elements
 
